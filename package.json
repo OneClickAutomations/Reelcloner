@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "inngest": "inngest-cli dev -u http://localhost:3000/api/inngest"
+    "inngest": "inngest-cli dev -u http://localhost:3000/api/inngest",
+    "db:test": "bash supabase/tests/run.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
@@ -27,6 +28,7 @@
     "@types/react-dom": "^19.1.9",
     "eslint": "^9.35.0",
     "eslint-config-next": "^15.5.4",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "inngest-cli": "^1.13.1",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2"
