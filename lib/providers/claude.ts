@@ -1,12 +1,12 @@
 /**
  * Anthropic adapter — master-prompt authoring.
- * Stage 1: typed surface only. Implemented in Stage 4.
+ * Typed surface only until Stage 4; the schema types are real as of Stage 3.
  */
 import { MODELS } from "@/config/models";
-import type { Analysis } from "./gemini";
+import type { MasterPrompt } from "@/lib/prompts/author";
+import type { Analysis } from "@/lib/schemas/analysis";
 
-/** Replaced by the Zod-inferred `MasterPrompt` type in Stage 3. */
-export type MasterPrompt = unknown;
+export type { MasterPrompt };
 
 export const CLAUDE_AUTHOR_MODEL = MODELS.claudeAuthor;
 

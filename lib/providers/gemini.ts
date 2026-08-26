@@ -1,15 +1,15 @@
 /**
  * Gemini adapter — video+audio analysis.
- * Stage 1: typed surface only. Implemented in Stage 4.
+ * Typed surface only until Stage 4; the schema types are real as of Stage 3.
  */
 import { MODELS } from "@/config/models";
+import type { Analysis } from "@/lib/schemas/analysis";
 
 export type VideoInput =
   | { kind: "url"; url: string }
   | { kind: "storagePath"; bucket: string; path: string };
 
-/** Replaced by the Zod-inferred `Analysis` type in Stage 3. */
-export type Analysis = unknown;
+export type { Analysis };
 
 export const GEMINI_MODEL = MODELS.gemini;
 

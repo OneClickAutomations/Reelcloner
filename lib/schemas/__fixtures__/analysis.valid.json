@@ -1,0 +1,83 @@
+{
+  "duration_seconds": 21.4,
+  "aspect_ratio": "9:16",
+  "recording_format": {
+    "take": "multi_cut",
+    "camera": "handheld phone, front-facing",
+    "framing": "medium close-up, subject centered",
+    "camera_movement": "slow handheld drift, one push-in"
+  },
+  "cuts": [
+    { "at_seconds": 6.2, "type": "hard cut" },
+    { "at_seconds": 14.8, "type": "hard cut" }
+  ],
+  "scene": {
+    "location_type": "indoor",
+    "setting": "kitchen counter beside a window",
+    "lighting": "daylight from frame left, soft",
+    "background": "white tiled backsplash, wooden shelf, out of focus"
+  },
+  "subjects": [
+    {
+      "id": "subject_1",
+      "type": "person",
+      "observed_description": "adult with shoulder-length dark hair, grey sweatshirt, speaking to camera",
+      "role": "presenter",
+      "approx_screen_time_pct": 88,
+      "is_candidate_replace_target": true
+    },
+    {
+      "id": "subject_2",
+      "type": "product",
+      "observed_description": "matte white cylindrical bottle, no legible label",
+      "role": "held and shown to camera",
+      "approx_screen_time_pct": 34,
+      "is_candidate_replace_target": true
+    }
+  ],
+  "motion_timeline": [
+    {
+      "start_seconds": 0,
+      "end_seconds": 6.2,
+      "subject_id": "subject_1",
+      "action": "talks to camera, gestures with right hand",
+      "camera": "static handheld"
+    },
+    {
+      "start_seconds": 6.2,
+      "end_seconds": 14.8,
+      "subject_id": "subject_2",
+      "action": "bottle lifted into frame and rotated once",
+      "camera": "slow push-in"
+    }
+  ],
+  "audio": {
+    "has_speech": true,
+    "transcript": "Okay so I've been using this for about [inaudible] weeks now and honestly my skin has never looked better.",
+    "speaker_tone": "casual, conversational, upbeat",
+    "approx_words_per_second": 2.6,
+    "music": "none",
+    "sfx": ["bottle cap click at 7s"]
+  },
+  "beats": [
+    {
+      "start_seconds": 0,
+      "end_seconds": 6.2,
+      "label": "hook",
+      "evidence": "opens mid-sentence with 'Okay so I've been using this', no product visible yet"
+    },
+    {
+      "start_seconds": 6.2,
+      "end_seconds": 14.8,
+      "label": "product reveal",
+      "evidence": "bottle enters frame at 6.2s and is rotated toward camera"
+    }
+  ],
+  "on_screen_text": [
+    { "at_seconds": 1.1, "text": "3 weeks in" }
+  ],
+  "notes_uncertain": [
+    "Brand name on the bottle is not legible at any point; left unrecorded.",
+    "Exact cut at 14.8s may be a fast dissolve rather than a hard cut."
+  ]
+}
