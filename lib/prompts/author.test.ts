@@ -130,3 +130,13 @@ describe("prompt text", () => {
     expect(built).toMatch(/rather than its looks/);
   });
 });
+
+describe("author grounding guardrails", () => {
+  it("forbids inventing posture, expression, props, or lighting", () => {
+    // Observed on a live run: the author added "seated" and "satisfied smile"
+    // that the analysis never recorded. Those render into the keyframe.
+    expect(AUTHOR_SYSTEM_PROMPT).toMatch(/posture/i);
+    expect(AUTHOR_SYSTEM_PROMPT).toMatch(/facial expression/i);
+    expect(AUTHOR_SYSTEM_PROMPT).toMatch(/If the Analysis does not say it, it does not go in the prompt/);
+  });
+});

@@ -7,10 +7,10 @@
  * This calls live APIs and costs money. It is a development tool, not part of
  * the app: the real flow runs inside Inngest from Stage 6.
  */
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { analyzeVideoDetailed, type VideoInput } from "@/lib/providers/gemini";
 import { authorMasterPromptDetailed } from "@/lib/providers/claude";
-import { replaceTargetCandidates } from "@/lib/schemas/analysis";
+import { AnalysisSchema, replaceTargetCandidates } from "@/lib/schemas/analysis";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -28,20 +28,31 @@ async function main() {
     ? { kind: "url", url: source }
     : { kind: "file", path: source };
 
+  // Re-analysing on every invocation burns a Gemini call and, worse, makes the
+  // author's output impossible to diff against the analysis it actually saw.
+  // --reuse loads the saved analysis instead.
+  const reuse = process.argv.includes("--reuse");
   const outDir = arg("out") ?? "./.analysis";
   await mkdir(outDir, { recursive: true });
   const stem = source.split("/").pop()?.replace(/\.[^.]+$/, "") ?? "video";
 
-  console.log(`\n=== ANALYZING ===\n${source}`);
-  const startedAt = Date.now();
-  const result = await analyzeVideoDetailed(video);
-  const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+  const analysisPath = `${outDir}/${stem}.analysis.json`;
+
+  let result: Awaited<ReturnType<typeof analyzeVideoDetailed>>;
+  if (reuse) {
+    const saved = JSON.parse(await readFile(analysisPath, "utf8"));
+    result = { analysis: AnalysisSchema.parse(saved), repaired: false, model: "(reused from disk)" };
+    console.log(`\n=== REUSING SAVED ANALYSIS ===\n${analysisPath}`);
+  } else {
+    console.log(`\n=== ANALYZING ===\n${source}`);
+    const startedAt = Date.now();
+    result = await analyzeVideoDetailed(video);
+    console.log(`took         ${((Date.now() - startedAt) / 1000).toFixed(1)}s`);
+    await writeFile(analysisPath, JSON.stringify(result.analysis, null, 2));
+  }
   const { analysis } = result;
 
-  await writeFile(`${outDir}/${stem}.analysis.json`, JSON.stringify(analysis, null, 2));
-
   console.log(`\nmodel        ${result.model}`);
-  console.log(`took         ${seconds}s`);
   console.log(`repair used  ${result.repaired ? "YES — first response failed validation" : "no"}`);
   console.log(`tokens       in=${result.usage?.promptTokens ?? "?"} out=${result.usage?.responseTokens ?? "?"}`);
 

@@ -61,7 +61,8 @@ Output one JSON object matching the MasterPrompt schema — nothing else, no mar
 Rules:
 1. Use ONLY facts present in the Analysis JSON. If a field is null or uncertain, do not invent a value for it.
 2. preserve carries the reference's recording format, camera movement, scene, motion timeline, and beats. This is what makes the result a recreation rather than a new ad.
-3. change describes ONLY the swap. The new subject's appearance comes from its reference images, so describe its role and placement — never invent how it looks.
+3. change describes ONLY the swap. The new subject's appearance comes from its reference images, so describe its role and placement - never invent how it looks.
+3a. Do not add physical details the Analysis did not record. That includes posture (seated, standing, leaning), facial expression (smiling, satisfied, grinning), clothing beyond what the reference images supply, props, furniture, or lighting sources. If the Analysis does not say it, it does not go in the prompt - the generator will render whatever you write, and an invented detail makes the output a different video rather than a recreation.
 4. keyframe_prompts: one per meaningful shot or beat. Each must place the new subject into the reference's exact framing and scene at that moment.
 5. motion_prompt: the motion to transfer, grounded in motion_timeline.
 6. Transform structure. Never copy third-party assets and never write a real named person's likeness.
