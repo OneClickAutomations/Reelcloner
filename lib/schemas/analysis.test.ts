@@ -169,3 +169,41 @@ describe("analysis helpers", () => {
     expect(findSubject(analysis, "nope")).toBeUndefined();
   });
 });
+
+describe("audio consistency", () => {
+  it("rejects has_speech=true when the transcript is only a non-speech marker", () => {
+    // Observed live: a laughter-only clip came back has_speech=true with
+    // transcript "[Laughter]" and wps null. That would push the pipeline into
+    // generating dialogue for a video with none.
+    const input = fixture();
+    input.audio = {
+      has_speech: true,
+      transcript: "[Laughter]",
+      speaker_tone: "joyful",
+      approx_words_per_second: null,
+      music: "",
+      sfx: ["laughter"],
+    };
+    expect(() => AnalysisSchema.parse(input)).toThrow(/no spoken words/);
+  });
+
+  it("accepts has_speech=true when real words sit alongside markers", () => {
+    const input = fixture();
+    (input.audio as Record<string, unknown>).transcript =
+      "I've used this for [inaudible] weeks and it works.";
+    expect(() => AnalysisSchema.parse(input)).not.toThrow();
+  });
+
+  it("accepts a laughter-only clip when honestly marked", () => {
+    const input = fixture();
+    input.audio = {
+      has_speech: false,
+      transcript: "",
+      speaker_tone: "",
+      approx_words_per_second: null,
+      music: "",
+      sfx: ["laughter", "clinking glasses"],
+    };
+    expect(() => AnalysisSchema.parse(input)).not.toThrow();
+  });
+});

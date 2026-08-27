@@ -31,6 +31,27 @@ export type VideoInput =
 const PROCESSING_TIMEOUT_MS = 5 * 60_000;
 const PROCESSING_POLL_MS = 3_000;
 
+/**
+ * Ceiling on a single generateContent call. Observed runs take 12-18s, but the
+ * call has been seen to hang well past that. Inside an Inngest step a hang ties
+ * up the run until the platform kills it, so fail fast and let the caller retry.
+ */
+const GENERATE_TIMEOUT_MS = 3 * 60_000;
+
+async function withTimeout<T>(work: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 function client(): GoogleGenAI {
   return new GoogleGenAI({ apiKey: requireEnv("GEMINI_API_KEY") });
 }
@@ -118,14 +139,18 @@ export async function analyzeVideoDetailed(video: VideoInput): Promise<AnalyzeRe
     temperature: 0,
   };
 
-  const first = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    config,
-    contents: createUserContent([
-      createPartFromUri(uri, mimeType),
-      buildAnalyzerUserPrompt(schemaJson),
-    ]),
-  });
+  const first = await withTimeout(
+    ai.models.generateContent({
+      model: GEMINI_MODEL,
+      config,
+      contents: createUserContent([
+        createPartFromUri(uri, mimeType),
+        buildAnalyzerUserPrompt(schemaJson),
+      ]),
+    }),
+    GENERATE_TIMEOUT_MS,
+    "gemini.analyzeVideo",
+  );
 
   const firstText = first.text ?? "";
   const firstAttempt = parseAndValidate(firstText, AnalysisSchema);
@@ -143,18 +168,22 @@ export async function analyzeVideoDetailed(video: VideoInput): Promise<AnalyzeRe
   }
 
   // One repair turn, with the video still attached so it can re-check the source.
-  const second = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    config,
-    contents: [
-      createUserContent([
-        createPartFromUri(uri, mimeType),
-        buildAnalyzerUserPrompt(schemaJson),
-      ]),
-      { role: "model", parts: [{ text: firstText }] },
-      createUserContent([buildRepairPrompt(firstAttempt.problem)]),
-    ],
-  });
+  const second = await withTimeout(
+    ai.models.generateContent({
+      model: GEMINI_MODEL,
+      config,
+      contents: [
+        createUserContent([
+          createPartFromUri(uri, mimeType),
+          buildAnalyzerUserPrompt(schemaJson),
+        ]),
+        { role: "model", parts: [{ text: firstText }] },
+        createUserContent([buildRepairPrompt(firstAttempt.problem)]),
+      ],
+    }),
+    GENERATE_TIMEOUT_MS,
+    "gemini.analyzeVideo/repair",
+  );
 
   const secondAttempt = parseAndValidate(second.text ?? "", AnalysisSchema);
   if (!secondAttempt.ok) {

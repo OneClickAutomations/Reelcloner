@@ -166,6 +166,22 @@ export const AnalysisSchema = z
       }
     }
 
+    // has_speech must agree with the transcript. A transcript that is only
+    // bracketed markers ("[Laughter]", "[Music]") is not speech, and the
+    // difference decides whether the recreation needs spoken dialogue at all.
+    if (analysis.audio.has_speech) {
+      const spoken = analysis.audio.transcript.replace(/\[[^\]]*\]/g, "").trim();
+      if (spoken.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `has_speech is true but the transcript contains no spoken words ` +
+            `(only non-speech markers). Set has_speech false, or transcribe the speech.`,
+          path: ["audio", "has_speech"],
+        });
+      }
+    }
+
     // Every motion segment must point at a subject the analyzer actually listed.
     const subjectIds = new Set(analysis.subjects.map((s) => s.id));
     analysis.motion_timeline.forEach((segment, i) => {

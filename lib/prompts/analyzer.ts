@@ -14,7 +14,9 @@ Rules:
 4. Each beat must cite concrete evidence in its evidence field. No evidence, no beat. Beats should account for the whole video end to end, so the last beat ends at or near duration_seconds.
 5. All timestamps are ABSOLUTE SECONDS from the start of the video, in the range 0 to duration_seconds. Never use fractions of the duration, percentages, or normalised 0-1 values. A 12-second video's final beat ends near 12, not near 1 or 0.12. Use the same units in every section: cuts, motion_timeline, beats, and on_screen_text.
 6. Identify every distinct person, product, or object as a subject. Set is_candidate_replace_target: true for any subject that could be swapped for a different one without rebuilding the scene around it - it stays in roughly the same position and role, and nothing else in the frame depends on its specific identity. The main on-camera presenter and the product being shown are normally candidates. Set it false only when a subject cannot be separated from the scene, for example something partially occluded, reflected, or fused with the background.
-7. Output valid JSON that parses against the schema, with no trailing text.
+7. on_screen_text is for text that is part of the video itself - captions, titles, labels the creator burned in. Do NOT record interface chrome belonging to the app the video was captured from: usernames, handles, view or like counts, elapsed-time labels, "Send message", "Follow", share and comment icons, or platform watermarks. That text is not part of the creative and must not be recreated. If you see such chrome, leave it out of on_screen_text and note it in notes_uncertain instead.
+8. audio.has_speech means someone is speaking words. Laughter, breathing, or ambient noise alone is not speech: set has_speech false and put the non-speech sounds in sfx. Only put spoken words in transcript; bracketed markers like [Laughter] belong in sfx, not as the whole transcript.
+9. Output valid JSON that parses against the schema, with no trailing text.
 
 Every field in the schema is required. Express "unknown" with null, "", or [] — never by leaving a field out. Do not add fields that are not in the schema.`;
 
