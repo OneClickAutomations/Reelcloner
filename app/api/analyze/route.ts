@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   const path = join(dir, `${crypto.randomUUID()}-${safeName}`);
   await writeFile(path, Buffer.from(await file.arrayBuffer()));
 
-  const job = createJob("analysis", { filename: file.name, sizeBytes: file.size });
+  const job = await createJob("analysis", { filename: file.name, sizeBytes: file.size });
   await inngest.send({ name: "analysis.requested", data: { jobId: job.id, videoPath: path } });
 
   return NextResponse.json({ jobId: job.id }, { status: 202 });

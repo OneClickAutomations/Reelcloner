@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const job = createJob("recreation", { replaceTargetId, characterDescription });
+  const job = await createJob("recreation", { replaceTargetId, characterDescription });
   await inngest.send({
     name: "recreation.requested",
     data: { jobId: job.id, analysis, replaceTargetId, characterDescription },

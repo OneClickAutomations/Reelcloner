@@ -23,7 +23,7 @@ export const runAnalysis = inngest.createFunction(
   { event: "analysis.requested" },
   async ({ event, step }) => {
     const { jobId, videoPath } = event.data;
-    await step.run("mark-running", () => updateJob(jobId, { status: "running" }));
+    await step.run("mark-running", async () => updateJob(jobId, { status: "running" }));
 
     try {
       const result = await step.run("analyze", () =>
@@ -38,7 +38,7 @@ export const runAnalysis = inngest.createFunction(
       return { ok: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await step.run("mark-failed", () => updateJob(jobId, { status: "failed", error: message }));
+      await step.run("mark-failed", async () => updateJob(jobId, { status: "failed", error: message }));
       throw error;
     }
   },
@@ -50,7 +50,7 @@ export const runRecreation = inngest.createFunction(
   { event: "recreation.requested" },
   async ({ event, step }) => {
     const { jobId, analysis, replaceTargetId, characterDescription } = event.data;
-    await step.run("mark-running", () => updateJob(jobId, { status: "running" }));
+    await step.run("mark-running", async () => updateJob(jobId, { status: "running" }));
 
     try {
       const result = await step.run("author", () =>
@@ -65,7 +65,7 @@ export const runRecreation = inngest.createFunction(
       return { ok: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await step.run("mark-failed", () => updateJob(jobId, { status: "failed", error: message }));
+      await step.run("mark-failed", async () => updateJob(jobId, { status: "failed", error: message }));
       throw error;
     }
   },

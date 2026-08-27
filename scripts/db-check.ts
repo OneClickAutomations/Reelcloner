@@ -34,30 +34,61 @@ async function main() {
 
   console.log(`project: ${url}\n`);
 
-  const results = await Promise.all(
-    TABLES.map(async (table) => {
-      try {
-        const response = await fetch(`${url}/rest/v1/${table}?select=*&limit=0`, { headers });
-        if (response.ok) return { table, state: "present" as const };
-        const body = await response.json().catch(() => ({}));
-        const missing = body?.code === "PGRST205";
-        return {
-          table,
-          state: missing ? ("missing" as const) : ("error" as const),
-          detail: missing ? undefined : `${response.status} ${body?.message ?? ""}`.trim(),
-        };
-      } catch (error) {
-        return { table, state: "error" as const, detail: (error as Error).message };
+  /**
+   * Only PGRST205 means "no such table". Anything else - a 401 from brief clock
+   * skew, a 5xx, a dropped connection - is a transport problem, and reporting it
+   * as a missing table sends people back to the SQL editor for no reason. So
+   * those get one retry, and are labelled as errors rather than absences.
+   */
+  async function probe(table: string, attempt = 1): Promise<{
+    table: string;
+    state: "present" | "missing" | "error";
+    detail?: string;
+  }> {
+    try {
+      const response = await fetch(`${url}/rest/v1/${table}?select=*&limit=0`, { headers });
+      if (response.ok) return { table, state: "present" };
+
+      const body = await response.json().catch(() => ({}));
+      if (body?.code === "PGRST205") return { table, state: "missing" };
+
+      if (attempt === 1) {
+        await new Promise((r) => setTimeout(r, 1000));
+        return probe(table, 2);
       }
-    }),
-  );
+      return {
+        table,
+        state: "error",
+        detail: `${response.status} ${body?.message ?? body?.detail ?? ""}`.trim(),
+      };
+    } catch (error) {
+      if (attempt === 1) {
+        await new Promise((r) => setTimeout(r, 1000));
+        return probe(table, 2);
+      }
+      return { table, state: "error", detail: (error as Error).message };
+    }
+  }
+
+  const results = await Promise.all(TABLES.map((t) => probe(t)));
 
   for (const r of results) {
     const mark = r.state === "present" ? "ok     " : r.state === "missing" ? "MISSING" : "ERROR  ";
     console.log(`  ${mark} ${r.table}${r.detail ? `  — ${r.detail}` : ""}`);
   }
 
-  const missing = results.filter((r) => r.state !== "present");
+  const missing = results.filter((r) => r.state === "missing");
+  const errored = results.filter((r) => r.state === "error");
+
+  if (errored.length > 0) {
+    console.log(
+      `\n${errored.length} table(s) could not be checked - that is a connection or auth ` +
+        `problem, not a missing table. Try again in a moment.`,
+    );
+    process.exitCode = 2;
+    return;
+  }
+
   if (missing.length === 0) {
     console.log(`\nAll ${TABLES.length} tables are present. The app can use Supabase.`);
     return;
