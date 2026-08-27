@@ -3,14 +3,23 @@
 @theme {
   --color-canvas: #08090c;
   --color-surface: #101218;
-  --color-border-subtle: #1e2230;
+  --color-raised: #171a23;
+  --color-line: #232734;
+  --color-ink: #e8eaf0;
+  --color-muted: #8b93a7;
+  --color-accent: #d97757;
 }
 
 :root {
   color-scheme: dark;
 }
 
+html,
 body {
   background-color: var(--color-canvas);
-  color: #e7e9ee;
+  color: var(--color-ink);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-accent) 35%, transparent);
 }

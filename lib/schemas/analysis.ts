@@ -164,6 +164,25 @@ export const AnalysisSchema = z
           path: ["beats"],
         });
       }
+
+      // A beat is a section of the video, not an instant. Sub-half-second beats
+      // are the fraction bug wearing a disguise: the model writes the first few
+      // beats as fractions of the duration and the last one in real seconds, so
+      // the list still reaches the end and the coverage check above passes.
+      // Nothing quotable happens in 0.02s.
+      const MIN_BEAT_SECONDS = 0.5;
+      analysis.beats.forEach((beat, i) => {
+        const length = beat.end_seconds - beat.start_seconds;
+        if (length < MIN_BEAT_SECONDS && analysis.duration_seconds >= 2) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              `beat "${beat.label}" lasts ${length.toFixed(2)}s. A beat is a section of the ` +
+              `video, not an instant - check these are absolute seconds, not fractions.`,
+            path: ["beats", i],
+          });
+        }
+      });
     }
 
     // has_speech must agree with the transcript. A transcript that is only

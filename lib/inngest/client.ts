@@ -1,11 +1,19 @@
 import { EventSchemas, Inngest } from "inngest";
+import type { Analysis } from "@/lib/schemas/analysis";
 
-/**
- * Event map for the pipeline. Stages 4-6 fill in the real payloads;
- * for now only the scaffold's hello-world event is defined.
- */
 type Events = {
   "app/hello.world": { data: { message: string } };
+  /** A reference video is ready to be watched. */
+  "analysis.requested": { data: { jobId: string; videoPath: string } };
+  /** Turn a finished analysis into generation prompts. */
+  "recreation.requested": {
+    data: {
+      jobId: string;
+      analysis: Analysis;
+      replaceTargetId: string;
+      characterDescription: string;
+    };
+  };
 };
 
 export const inngest = new Inngest({

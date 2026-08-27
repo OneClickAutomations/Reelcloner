@@ -207,3 +207,31 @@ describe("audio consistency", () => {
     expect(() => AnalysisSchema.parse(input)).not.toThrow();
   });
 });
+
+describe("mixed-unit beats (the fraction bug in disguise)", () => {
+  it("rejects sub-half-second beats even when the list reaches the end", () => {
+    // Observed live through the UI: the first three beats came back as
+    // fractions of the duration while the last used real seconds, so the list
+    // still ended at 12s and the coverage check passed.
+    const input = fixture();
+    input.duration_seconds = 12;
+    input.beats = [
+      { start_seconds: 0, end_seconds: 0.02, label: "hook", evidence: "says '500 skills'" },
+      { start_seconds: 0.02, end_seconds: 0.04, label: "ease", evidence: "says 'I search'" },
+      { start_seconds: 0.04, end_seconds: 0.09, label: "benefits", evidence: "lists areas" },
+      { start_seconds: 0.09, end_seconds: 12, label: "value", evidence: "says 'best 99 bucks'" },
+    ];
+    input.motion_timeline = [];
+    expect(() => AnalysisSchema.parse(input)).toThrow(/not an instant/);
+  });
+
+  it("still accepts genuinely short beats in a very short clip", () => {
+    const input = fixture();
+    input.duration_seconds = 1.5;
+    input.beats = [{ start_seconds: 0, end_seconds: 1.5, label: "whole clip", evidence: "one shot" }];
+    input.motion_timeline = [];
+    input.cuts = [];
+    input.on_screen_text = [];
+    expect(() => AnalysisSchema.parse(input)).not.toThrow();
+  });
+});
