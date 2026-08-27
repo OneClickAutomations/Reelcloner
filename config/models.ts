@@ -7,7 +7,7 @@
  *  - Higgsfield confirmed against https://docs.higgsfield.ai/docs/openapi.json
  *    (Higgsfield API 2.0.0). Note it exposes one PATH PER MODEL rather than a
  *    model-id parameter, so these are paths, not IDs.
- *  - OpenAI image model is the one item still unverified.
+ *  - OpenAI image model confirmed against GET /v1/models.
  */
 export const MODELS = {
   /** Video+audio analysis. Verified: present in the Gemini models list. */
@@ -15,7 +15,7 @@ export const MODELS = {
   /** Master-prompt authoring. Verified: present in the Anthropic models list. */
   claudeAuthor: "claude-opus-4-8",
   claudeOrchestrator: "claude-sonnet-5",
-  /** TODO: verify against the OpenAI images API now that the host is reachable. */
+  /** Keyframe generation. Verified: present in the OpenAI models list. */
   openaiImage: "gpt-image-1",
 } as const;
 

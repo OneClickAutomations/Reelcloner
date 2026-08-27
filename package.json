@@ -3,16 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "NODE_USE_ENV_PROXY=1 next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_USE_ENV_PROXY=1 next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "inngest": "inngest-cli dev -u http://localhost:3000/api/inngest",
     "db:test": "bash supabase/tests/run.sh",
     "test": "vitest run",
     "test:watch": "vitest",
-    "analyze": "tsx scripts/analyze.ts"
+    "analyze": "NODE_USE_ENV_PROXY=1 tsx scripts/analyze.ts",
+    "db:check": "NODE_USE_ENV_PROXY=1 tsx scripts/db-check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.121.0",
