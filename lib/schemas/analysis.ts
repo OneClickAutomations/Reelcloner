@@ -125,6 +125,47 @@ export const AnalysisSchema = z
   })
   .strict()
   .superRefine((analysis, ctx) => {
+    // Timestamps must be absolute seconds inside the video. Models sometimes
+    // emit normalised fractions (0-1) for one section while using real seconds
+    // in another; that silently corrupts every downstream keyframe time, so it
+    // must fail validation rather than pass through.
+    const limit = analysis.duration_seconds + 0.5; // tolerance for rounding
+    const checkTime = (value: number, path: (string | number)[]) => {
+      if (value > limit) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `${value} is past the end of a ${analysis.duration_seconds}s video. ` +
+            `Timestamps must be absolute seconds, not fractions or percentages.`,
+          path,
+        });
+      }
+    };
+
+    analysis.cuts.forEach((cut, i) => checkTime(cut.at_seconds, ["cuts", i, "at_seconds"]));
+    analysis.on_screen_text.forEach((t, i) =>
+      checkTime(t.at_seconds, ["on_screen_text", i, "at_seconds"]),
+    );
+    analysis.motion_timeline.forEach((m, i) =>
+      checkTime(m.end_seconds, ["motion_timeline", i, "end_seconds"]),
+    );
+    analysis.beats.forEach((b, i) => checkTime(b.end_seconds, ["beats", i, "end_seconds"]));
+
+    // Beats should describe the whole video, not a sliver of it. A beat list
+    // that stops in the first few percent is the fraction bug in disguise.
+    if (analysis.beats.length > 0) {
+      const covered = Math.max(...analysis.beats.map((b) => b.end_seconds));
+      if (covered < analysis.duration_seconds * 0.5) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `beats stop at ${covered}s but the video is ${analysis.duration_seconds}s long. ` +
+            `Beats must cover the video in absolute seconds.`,
+          path: ["beats"],
+        });
+      }
+    }
+
     // Every motion segment must point at a subject the analyzer actually listed.
     const subjectIds = new Set(analysis.subjects.map((s) => s.id));
     analysis.motion_timeline.forEach((segment, i) => {

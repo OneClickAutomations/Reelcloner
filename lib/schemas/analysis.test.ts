@@ -105,6 +105,30 @@ describe("AnalysisSchema", () => {
     expect(() => AnalysisSchema.parse(input)).toThrow();
   });
 
+  it("rejects normalised (fractional) beat timestamps — the real Gemini failure", () => {
+    // Observed on a live 12s video: motion_timeline used real seconds while
+    // beats came back as fractions of the duration.
+    const input = fixture();
+    input.beats = [
+      { start_seconds: 0, end_seconds: 0.02, label: "hook", evidence: "opens mid-sentence" },
+      { start_seconds: 0.02, end_seconds: 0.12, label: "pitch", evidence: "lists benefits" },
+    ];
+    expect(() => AnalysisSchema.parse(input)).toThrow(/absolute seconds/);
+  });
+
+  it("rejects a timestamp past the end of the video", () => {
+    const input = fixture();
+    (input.cuts as Record<string, unknown>[])[0].at_seconds = 999;
+    expect(() => AnalysisSchema.parse(input)).toThrow(/past the end/);
+  });
+
+  it("allows a beat ending a hair past duration, for rounding", () => {
+    const input = fixture();
+    const beats = input.beats as Record<string, unknown>[];
+    beats[beats.length - 1].end_seconds = 21.6; // duration is 21.4
+    expect(() => AnalysisSchema.parse(input)).not.toThrow();
+  });
+
   it("accepts a sparse but honest analysis: unknowns as null/empty, noted", () => {
     const sparse = {
       duration_seconds: 8,
